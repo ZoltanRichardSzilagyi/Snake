@@ -55,6 +55,11 @@ var Screen = function(gameSceneItem, resourceHandlerObject){
         context.fill();        
     };
     
+    this.drawRectangle = function(x,y,width,height,color){
+        c.fillStyle = color;
+        c.fillRect(x,y,width,height);        
+    };
+  
     this.text = function(text, x, y, color){
         context.fillStyle = color;
         context.font = "italic 14pt Arial ";
@@ -69,10 +74,10 @@ var Screen = function(gameSceneItem, resourceHandlerObject){
 };
 
 var Directions = {
-    "RIGHT" : 1,
-    "DOWN" : 2,
-    "LEFT" : 3,
-    "UP" : 4 
+    "right" : 1,
+    "down" : 2,
+    "left" : 3,
+    "up" : 4 
 };
 
 var SnakeBody = function(posX, posY, dir, resourceObject){
@@ -184,14 +189,14 @@ var Snake = function(sceneObject){
             
     var createBody = function(){
         var position;
-        direction = Directions.UP;
+        direction = Directions.up;
         
-        position = new SnakeBody(initX, initY, Directions.UP, resources.head);
+        position = new SnakeBody(initX, initY, Directions.up, resources.head);
         body.push(position);
         initY = initY + stepLength;
         
         for(var i=1;i<initialLength;i++){            
-            position = new SnakeBody(initX, initY, Directions.UP, resources.body);
+            position = new SnakeBody(initX, initY, Directions.up, resources.body);
             initY = initY + stepLength;
             body.push(position);
         }
@@ -224,7 +229,7 @@ var Snake = function(sceneObject){
     var setBodyItemNewPosition = function(bodyItem){
         var bodyItemDirection = bodyItem.getDirection();
         switch(bodyItemDirection){
-            case Directions.RIGHT:
+            case Directions.right:
                 if(bodyItem.getX() == Config.gameStageWidthMax){
                     bodyItem.setX(Config.gameStageWidthMin);
                 }else{
@@ -233,7 +238,7 @@ var Snake = function(sceneObject){
                 
             break;
             
-            case Directions.DOWN:
+            case Directions.down:
                 if(bodyItem.getY() == Config.gameStageHeightMax){
                     bodyItem.setY(Config.gameStageHeightMin);
                 }else{
@@ -241,7 +246,7 @@ var Snake = function(sceneObject){
                 }
             break;
             
-            case Directions.LEFT:
+            case Directions.left:
                 if(bodyItem.getX() == Config.gameStageWidthMin){
                     bodyItem.setX(Config.gameStageWidthMax);
                 }else{
@@ -249,7 +254,7 @@ var Snake = function(sceneObject){
                 }                
             break;
             
-            case Directions.UP:
+            case Directions.up:
                 if(bodyItem.getY() == Config.gameStageHeightMin){
                     bodyItem.setY(Config.gameStageHeightMax);
                 }else{
@@ -290,19 +295,19 @@ var Snake = function(sceneObject){
         var bodyItemDirection = newBodyItem.getDirection();
         
         switch(bodyItemDirection){
-            case Directions.RIGHT:
+            case Directions.right:
                 newBodyItem.setX(newBodyItem.getX()-stepLength);
             break;
             
-            case Directions.DOWN:
+            case Directions.down:
                 newBodyItem.setY(newBodyItem.getY()-stepLength);
             break;
             
-            case Directions.LEFT:
+            case Directions.left:
                 newBodyItem.setX(newBodyItem.getX()+stepLength);
             break;
             
-            case Directions.UP:
+            case Directions.up:
                 newBodyItem.setY(newBodyItem.getY()+stepLength);
             break;
         };
@@ -310,26 +315,26 @@ var Snake = function(sceneObject){
     };
         
     this.turnLeft = function(){
-        if(direction != Directions.RIGHT){
-            direction = Directions.LEFT;
+        if(direction != Directions.right){
+            direction = Directions.left;
         }
     };
     
     this.turnRight = function(){
-        if(direction != Directions.LEFT){
-            direction = Directions.RIGHT;
+        if(direction != Directions.left){
+            direction = Directions.right;
         }
     };
     
     this.turnUp = function(){
-        if(direction != Directions.DOWN){
-            direction = Directions.UP;
+        if(direction != Directions.down){
+            direction = Directions.up;
         }            
     };
     
     this.turnDown = function(){
-        if(direction != Directions.UP){        
-            direction = Directions.DOWN;
+        if(direction != Directions.up){        
+            direction = Directions.down;
         }            
     };
     
@@ -362,7 +367,9 @@ var Snake = function(sceneObject){
 var SpecialObjectMode = {
     off : 1,
     single : 2,
-    multi : 3
+    multi : 3,
+    labyrinth : 4
+    
 };
 
 var SpecialObjects = function(sceneObject){
@@ -387,11 +394,20 @@ var SpecialObjects = function(sceneObject){
     };    
     
     var createSpecialObject = function(){
-        objectsNum++;
-        var specialObject = new SpecialObject(createObjectId(), 10000);
-        specialObject.init();
-        specialObjects[specialObject.getId()] = specialObject;
-        return specialObject;
+        if(mode < 5){
+            return;
+        }
+        if(mode < 8){
+            objectsNum++;
+            var specialObject = new SpecialObject(createObjectId(), 10000);
+            specialObject.init();
+            specialObjects[specialObject.getId()] = specialObject;
+            return;
+        }
+            objectsNum++;
+            var specialObject = new Block(createObjectId(), 1000000);
+            specialObject.init();
+            specialObjects[specialObject.getId()] = specialObject;        
     };
     
     var removeSpecialObject = function(specialObject){
@@ -400,12 +416,17 @@ var SpecialObjects = function(sceneObject){
         delete(specialObjects[id]);
     };
     
+    var generateNewMode = function(){
+        mode = Math.ceil(Math.random() * 10);    
+    };
+    
     var preRender = function(){
-        var specialObject;
-        
+        var specialObject;        
         if(mode === SpecialObjectMode.off){
-            mode = SpecialObjectMode.single;
-            specialObject = createSpecialObject();
+            //mode = SpecialObjectMode.single;
+            generateNewMode();
+            console.log(mode);
+            createSpecialObject();
             return;                                
         }
         for(var key in specialObjects){
@@ -413,7 +434,7 @@ var SpecialObjects = function(sceneObject){
             if(specialObject.isDead()){
                 removeSpecialObject(specialObject);
             }else{
-                specialObject.decreaseLifeTime(100);
+                specialObject.decreaseLifeTime(10);
             }
         }
         if(objectsNum == 0){
@@ -424,12 +445,9 @@ var SpecialObjects = function(sceneObject){
     this.render = function(screen){
         var specialObject;
         preRender();
-        if(mode === SpecialObjectMode.off){
-            return;
-        }
         for(var key in specialObjects){
             specialObject = specialObjects[key];
-            screen.drawCircle(specialObject.getX(),specialObject.getY(),10,"#aaff00");
+            specialObject.render(screen);
         }
     };
     
@@ -445,9 +463,9 @@ var SpecialObjects = function(sceneObject){
 var SpecialObject = function(id, lifeTimeValue){
     var x,
         y,
-        id,
+        id,                                                                                                         
         size = Config.objectSize,        
-        lifeTime = 1000;
+        lifeTime = lifeTimeValue;
     
     this.init = function(){
         x = createRandomPosition(32)
@@ -477,11 +495,61 @@ var SpecialObject = function(id, lifeTimeValue){
     this.getY = function(){
         return y;    
     };
+    
+    this.render = function(screen){
+        screen.drawCircle(x,y,10,"#aaff00");
+    };
         
     var createRandomPosition = function(max){
         return Math.ceil(Math.random() * max)*size;
-    };        
+    };
 
+};
+
+var Block = function(id, lifeTimeValue){
+    var x,
+        y,
+        id,                                                                                                         
+        size = Config.objectSize,        
+        lifeTime = lifeTimeValue;
+    
+    this.init = function(){
+        x = createRandomPosition(32)
+        y = createRandomPosition(22);        
+    };
+        
+    this.getLifeTime = function(){
+        return lifeTime;
+    };
+    
+    this.isDead = function(){
+        return lifeTime == 0 ? true : false;
+    }
+    
+    this.decreaseLifeTime = function(value){
+        lifeTime = lifeTime - value;
+    }
+    
+    this.getId = function(){
+        return id;    
+    };    
+        
+    this.getX = function(){
+        return x;    
+    };
+    
+    this.getY = function(){
+        return y;    
+    };
+    
+    this.render = function(screen){
+        screen.drawRectangle(x,y,30,30,"#aaff00");
+    };
+        
+    var createRandomPosition = function(max){
+        return Math.ceil(Math.random() * max)*size;
+    };
+    
 }
 
 var SnakeMeal = function(snakeObject, sceneObject){
@@ -631,29 +699,29 @@ var Game = function(){
     var controlSnake = function(key){
         var keyCode = key.keyCode;
         switch(keyCode){            
-            case Keys.RIGHT :            
+            case Keys.right :            
                 snake.turnRight();
             break;
             
-            case Keys.DOWN :
+            case Keys.down :
                 snake.turnDown();
             break;            
             
-            case Keys.LEFT :
+            case Keys.left :
                 snake.turnLeft();
             break;
             
-            case Keys.UP :
+            case Keys.up :
                 snake.turnUp();
             break;
         }
     };
     
     var Keys = {
-        "RIGHT" : 39,
-        "DOWN" : 40,
-        "LEFT" : 37,
-        "UP" : 38
+        "right" : 39,
+        "down" : 40,
+        "left" : 37,
+        "up" : 38
     };
     
     var gameTurn = function(){        
